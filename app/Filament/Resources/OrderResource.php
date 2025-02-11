@@ -15,6 +15,7 @@ use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Columns\IconColumn;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
+use Filament\Forms\Components\Placeholder;
 
 class OrderResource extends Resource
 {
@@ -55,49 +56,62 @@ class OrderResource extends Resource
                     ->schema([
                         Forms\Components\Select::make('part_id')
                             ->relationship('parts', 'name')
-                            ->label('Peça'),
+                            ->label('Peça')
+                            ->reactive()
+                            ->live()
+                            ->afterStateUpdated(fn ($state, callable $set) => 
+                            $set('price', Part::find($state)?->price ?? 0)
+                        ),
+
+                        // Preço Unitário (pega direto da peça)
+                        Forms\Components\TextInput::make('price')
+                            ->label('Preço Unitário')
+                            ->numeric()
+                            ->disabled()
+                            ->live() // Atualiza automaticamente ao mudar part_id
+                            ->dehydrated(),
 
                         Forms\Components\TextInput::make('quantity')
                             ->numeric()
                             ->minValue(1)
+                            ->live() // Atualiza dinamicamente sem afterStateUpdated
                             ->rule(fn ($get) => 'lte:' . (\App\Models\Part::find($get('part_id'))?->quantity ?? 1)) // Valida que quantity <= estoque
                             ->label('Quantidade')
                             ->reactive()
                             ->afterStateUpdated(fn ($state, callable $set, callable $get) => 
-                                $quantity = $get('quantity') ?? 1,
-                                $set('quantity', $quantity),
-                                // Atualiza subtotal ao alterar quantidade
-                                $set('subtotal', ($get('unit_price') ?? 0) * $quantity);
-                            ),
-                            // ->afterStateUpdated(fn ($state, callable $set, callable $get) => 
-                            //     $price = \App\Models\Part::find($state)?->price ?? 0,
-                            //     $set('unit_price', $price),
-                            //     // Atualiza subtotal ao selecionar peça
-                            //     $set('subtotal', $price * ($get('quantity') ?? 1));
-                            // ),
+                            $set('total_price', $get('price') * $state)
+                        ),
 
-                        Forms\Components\TextInput::make('subtotal')
-                            ->label('Subtotal')
-                            ->numeric()
-                            ->disabled(), // Apenas visualização automática
+
+                        Placeholder::make('total_price_display')
+                        ->label('Preço Total')
+                        ->content(fn (callable $get) => 
+                            'R$ ' . number_format($get('total_price') ?? 0, 2, ',', '.')
+                        ),
                     ])
-                    ->label('Peças Utilizadas'),
-                    //->columnSpanFull()
-                    
+                    ->columns(4) // Melhor organização visual
+                    ->label('Peças Utilizadas')
+                    ->columnSpanFull()
+                    ->live()
+                    ->addActionLabel('Adicionar peça'),
+                        
                 Forms\Components\TextInput::make('extra_value')
                     ->label('Valor do Seviço')
                     ->numeric()
                     ->reactive()
-                    ->default(0),
+                    ->default(0)
+                    ->live(),
 
-                Forms\Components\TextInput::make('valor_total')
-                    ->numeric()
-                    ->disabled()
+                    Placeholder::make('final_total')
                     ->label('Valor Total')
-                    ->reactive()
-                    ->afterStateUpdated(fn ($state, callable $set, $get) => 
-                        $set('valor_total', collect($get('parts'))
-                            ->sum(fn ($item) => $item['subtotal'] ?? 0) + ($get('extra_value') ?? 0))),
+                    ->content(fn (callable $get) => 
+                        'R$ ' . number_format(
+                            collect($get('parts'))
+                                ->sum(fn ($part) => $part['total_price'] ?? 0)
+                            + ($get('service_price') ?? 0),
+                            2, ',', '.'
+                        )
+                    ),
             ]);
     }
 

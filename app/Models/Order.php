@@ -31,7 +31,7 @@ class Order extends Model
     public function parts()
     {
         return $this->belongsToMany(Part::class)
-        ->withPivot('quantity')
+        ->withPivot('price','quantity')
         ->withTimestamps();
     }
 }
