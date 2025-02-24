@@ -19,35 +19,43 @@ class OrderFactory extends Factory
         return [
             'customer_id' => \App\Models\Customer::factory(),
             'vehicle_id' => \App\Models\Vehicle::factory(),
-            'status' => $this->faker->randomElement(['Aberto', 'Em andamento', 'Concluído']),
+            'status' => $this->faker->randomElement([0, 1, 2]),
             'description' => $this->faker->sentence(),
-            'valor_total' => $this->faker->randomFloat(2, 100, 1000),
-            // 'customer_id' => \App\Models\Customer::factory(),
-            // 'parts' => [
-            //     [
-            //         'part_id' => \App\Models\Part::factory(),
-            //         'quantity' => $this->faker->numberBetween(1, 5),
-            //     ],
-            //     [
-            //         'part_id' => \App\Models\Part::factory(),
-            //         'quantity' => $this->faker->numberBetween(1, 5),
-            //     ],
-            //     [
-            //         'part_id' => \App\Models\Part::factory(),
-            //         'quantity' => $this->faker->numberBetween(1, 5),
-            //     ],
-            // ],
+            'service_price' => $this->faker->randomFloat(2, 50, 500), 
+            'total_parts_price' => 0, 
+            'final_total' => 0,
+            
+
         ];
     }
 
     public function configure()
-{
-    return $this->afterCreating(function (\App\Models\Order $order) {
-        $parts = \App\Models\Part::inRandomOrder()->limit(rand(1, 5))->get();
-        foreach ($parts as $part) {
-            $order->parts()->attach($part->id, ['quantity' => rand(1, 3)]);
-        }
-    });
-}
+    {
+        return $this->afterCreating(function (\App\Models\Order $order) {
+            $parts = \App\Models\Part::inRandomOrder()->limit(rand(1, 5))->get();
+            $totalPartsPrice = 0;
+            foreach ($parts as $part) {
+                $quantity = rand(1, 3);
+                $unitPrice = $part->price;
+                $totalPrice = $quantity * $unitPrice;
+
+                // Associando peça à ordem com preço unitário correto
+                $order->parts()->attach($part->id, [
+                    'quantity' => $quantity,
+                    'unit_price' => $unitPrice,
+                    'total_price' => $totalPrice,
+                ]);
+
+                // Atualiza o total das peças
+                $totalPartsPrice += $totalPrice;
+            }
+
+            // Atualiza os valores na order
+            $order->update([
+                'total_parts_price' => $totalPartsPrice,
+                'final_total' => $totalPartsPrice + $order->service_price,
+            ]);
+        });
+    }
 
 }

@@ -15,8 +15,8 @@ return new class extends Migration
             $table->id();
             $table->string('code')->unique()->required();
             $table->string('name')->required();
-            $table->integer('quantity')->default(0);
-            $table->decimal('price', 10, 2)->required();
+            $table->integer('quantity')->default(0)->unsigned();
+            $table->decimal('price', 10, 2)->default(0)->required();
             $table->text('description')->nullable();
 
             $table->timestamps();

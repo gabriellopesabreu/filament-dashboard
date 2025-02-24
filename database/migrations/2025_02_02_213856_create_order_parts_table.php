@@ -13,10 +13,12 @@ return new class extends Migration
     {
         Schema::create('order_part', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('order_id')->constrained()->cascadeOnDelete();
-            $table->foreignId('part_id')->constrained()->cascadeOnDelete();
+            $table->foreignId('order_id')->constrained()->cascadeOnUpdate()->cascadeOnDelete();
+            $table->foreignId('part_id')->constrained()->cascadeOnUpdate()->cascadeOnDelete();
             $table->integer('quantity')->default(1);
             $table->timestamps();
+            $table->decimal('unit_price', 10, 2); // Preço unitário no momento da compra
+            $table->decimal('total_price', 10, 2);
         });
     }
 

@@ -15,9 +15,11 @@ return new class extends Migration
             $table->id();
             $table->foreignId('customer_id')->constrained()->cascadeOnDelete();
             $table->foreignId('vehicle_id')->constrained()->cascadeOnDelete();
-            $table->string('status')->default('Aberto'); // Aberto, Em andamento, Concluído
+            $table->tinyInteger('status')->default('0'); // 0 - Aberto, 1 - Em andamento, 2 - Concluído
             $table->string('description')->required();
-            $table->decimal('valor_total', 10, 2)->required();
+            $table->decimal('total_parts_price', 10, 2)->default(0);
+            $table->decimal('service_price', 10, 2)->default(0);
+            $table->decimal('final_total', 10, 2)->default(0);
             $table->json('images')->nullable();
 
             // $table->json('services')->nullable(); //tabela a parte dos servicos

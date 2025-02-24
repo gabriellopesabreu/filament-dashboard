@@ -17,10 +17,14 @@ class PartFactory extends Factory
     public function definition(): array
     {
         return [
-            'code' => $this->faker->unique()->numberBetween(1, 10000),
-            'name' => $this->faker->name,
-            'quantity' => $this->faker->numberBetween(1, 10),
-            'price' => $this->faker->randomFloat(2, 10, 100),
+            'code' => $this->faker->unique()->bothify('P-#####'), // Código de peça único
+            'name' => $this->faker->randomElement([
+                'Filtro de Óleo', 'Bateria 60Ah', 'Pastilha de Freio', 
+                'Correia Dentada', 'Velas de Ignição', 'Radiador', 'Amortecedor',
+                'Pneu Aro 14', 'Pneu Aro 15', 'Pneu Aro 16', 'Pneu Aro 17',
+            ]),
+            'quantity' => $this->faker->numberBetween(5, 50),
+            'price' => $this->faker->randomFloat(2, 50, 500),
             'description' => $this->faker->sentence,
         ];
     }
